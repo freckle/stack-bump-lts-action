@@ -29,6 +29,9 @@ outputs:
   newer-available:
     description: "True if we found a newer resolver"
     value: steps.commit.outputs.newer-available
+  build-errors:
+    description: "True if stack was not able to build"
+    value: steps.commit.outputs.build-errors
   commit-message:
     description: "Commit message used, including Changelog information"
     value: steps.commit.outputs.message
@@ -76,9 +79,10 @@ runs:
         fi
 
         echo "::set-output name=newer-available::true"
+
         commit_message() {
           cat <<EOM
-        Bump backend resolver to $latest
+        Bump Stackage Resolver to $latest
 
         See here for changed packages:
 
@@ -88,7 +92,11 @@ runs:
         }
 
         sed -i 's/^resolver: .*$/resolver: '"$latest"'/' "$path"
-        stack build --dry-run --test --bench
+        if ! stack build --dry-run --test --bench; then
+          echo "::set-output name=build-errors::true"
+        fi
+
+        echo "::set-output name=build-errors::false"
 
         actor=${{ github.actor }}
         git config --global user.email "$actor@users.noreply.github.com"
