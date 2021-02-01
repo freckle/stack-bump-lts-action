@@ -28,7 +28,7 @@ outputs:
     value: steps.setup.outputs.latest
   newer-available:
     description: "True if we found a newer resolver"
-    value: steps.setup.outputs.newer-available
+    value: steps.commit.outputs.newer-available
   commit-message:
     description: "Commit message used, including Changelog information"
     value: steps.commit.outputs.message
@@ -58,6 +58,17 @@ runs:
         )
         echo "::set-output name=latest::$latest"
 
+    - name: Update resolver and commit
+      id: commit
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        current=${{ steps.setup.outputs.current }}
+        latest=${{ steps.setup.outputs.latest }}
+        stack_yaml=${{ inputs.stack-yaml }}
+        stack_yaml_lock=${{ inputs.stack-yaml }}.lock
+        path=${{ steps.setup.outputs.path }}
+
         if [[ "$current" == "$latest" ]]; then
           echo "Up to date ($current)"
           echo "::set-output name=newer-available::false"
@@ -65,35 +76,22 @@ runs:
         fi
 
         echo "::set-output name=newer-available::true"
-
-    - name: Update resolver and commit
-      id: commit
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      if: steps.setup.outputs.newer-available
-      run: |
         commit_message() {
           cat <<EOM
-        Bump backend resolver to ${{ steps.setup.outputs.latest }}
+        Bump backend resolver to $latest
 
         See here for changed packages:
 
-            https://resolver-changelog.herokuapp.com/?from=${{ steps.setup.outputs.current }}&to=${{ steps.setup.outputs.latest }}
+            https://resolver-changelog.herokuapp.com/?from=$current&to=$latest
 
         EOM
         }
 
-        sed -i 's/^resolver: .*$/resolver: ${{ steps.setup.outputs.latest }}/' \
-          "${{ steps.setup.outputs.path }}"
+        sed -i 's/^resolver: .*$/resolver: '"$latest"'/' "$path"
         stack build --dry-run --test --bench
 
         actor=${{ github.actor }}
         git config --global user.email "$actor@users.noreply.github.com"
         git config --global user.name "$actor"
-        git commit \
-          "${{ inputs.stack-yaml }}" \
-          "${{ inputs.stack-yaml }}.lock" \
-          "${{ steps.setup.outputs.path }}" \
-          --file <(commit_message)
-
+        git commit "$stack_yaml" "$stack_yaml_lock" "$path" --file <(commit_message)
         echo "::set-output name=message::$(commit_message)"
