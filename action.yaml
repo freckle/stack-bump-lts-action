@@ -19,22 +19,22 @@ inputs:
 outputs:
   path:
     description: "File being updated"
-    value: steps.setup.outputs.path
+    value: ${{ steps.setup.outputs.path }}
   current:
     description: "Current resolver"
-    value: steps.setup.outputs.current
+    value: ${{ steps.setup.outputs.current }}
   latest:
     description: "Latest LTS resolver"
-    value: steps.setup.outputs.latest
+    value: ${{ steps.setup.outputs.latest }}
   newer-available:
     description: "True if we found a newer resolver"
-    value: steps.commit.outputs.newer-available
+    value: ${{ steps.commit.outputs.newer-available }}
   build-errors:
     description: "True if stack was not able to build"
-    value: steps.commit.outputs.build-errors
+    value: ${{ steps.commit.outputs.build-errors }}
   commit-message:
     description: "Commit message used, including Changelog information"
-    value: steps.commit.outputs.message
+    value: ${{ steps.commit.outputs.message }}
 
 runs:
   using: composite
