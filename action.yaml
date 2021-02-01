@@ -86,7 +86,7 @@ runs:
 
         See here for changed packages:
 
-            https://resolver-changelog.herokuapp.com/?from=$current&to=$latest
+            https://rcl.freckle.com/?from=$current&to=$latest
 
         EOM
         }
