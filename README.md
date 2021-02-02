@@ -1,7 +1,6 @@
 # Stack Bump LTS Action
 
-Update a Stack-based Haskell project to latest LTS and open a Pull Request with
-Changelog outlining the difference from current.
+Automatically update a Stack-based Haskell project to latest LTS.
 
 ## Usage
 
@@ -39,7 +38,7 @@ If you use a path other than `stack.yaml`:
     stack-yaml: stack-default.yaml
 ```
 
-If you're `stack.yml` uses `resolver: ./other-file.yaml`:
+If your `stack.yml` uses `resolver: ./other-file.yaml`:
 
 ```yaml
 - id: bump
@@ -57,7 +56,20 @@ To operate in a sub-directory:
     working-directory: backend
 ```
 
-NOTE: Path options are relative to this.
+**NOTE**: Path options are relative to this.
+
+## Resolver Changelog
+
+The commit message will link to another project of ours, [Resolver
+Changelog][rcl]. For example,
+
+[rcl]: https://github.com/freckle/rcl
+
+https://rcl.freckle.com?from=lts-16.29&to-lts-17.1
+
+This service displays the packages added, removed, or changed between the given
+two resolvers. And, where possible, the section of each dependency's Changelog
+relevant for the update.
 
 ---
 
