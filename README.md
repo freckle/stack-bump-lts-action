@@ -65,7 +65,7 @@ Changelog][rcl]. For example,
 
 [rcl]: https://github.com/freckle/rcl
 
-https://rcl.freckle.com?from=lts-16.29&to-lts-17.1
+https://rcl.freckle.com?from=lts-16.29&to=lts-17.1
 
 This service displays the packages added, removed, or changed between the given
 two resolvers. And, where possible, the section of each dependency's Changelog
