@@ -15,6 +15,10 @@ inputs:
     description: "Directory for all run steps"
     required: true
     default: .
+  actor:
+    description: "Login to use instead of ${{ github.actor }}"
+    required: true
+    default: ''
 
 outputs:
   path:
@@ -98,7 +102,8 @@ runs:
 
         echo "::set-output name=build-errors::false"
 
-        actor=${{ github.actor }}
+        actor=${{ inputs.actor }}
+        actor=${actor:-${{ github.actor }}}
         git config --global user.email "$actor@users.noreply.github.com"
         git config --global user.name "$actor"
         git commit "$stack_yaml" "$stack_yaml_lock" "$path" --file <(commit_message)
