@@ -16,7 +16,7 @@ inputs:
     required: true
     default: .
   actor:
-    description: "Login to use instead of ${{ github.actor }}"
+    description: "Login to use instead of github.actor"
     required: true
     default: ''
 
