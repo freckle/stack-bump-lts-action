@@ -19,8 +19,6 @@ inputs:
     description: "Login to use instead of github.actor"
     required: true
     default: ""
-  dry-run:
-    description: Set to "true" to skip building with updated stack.yaml
 
 outputs:
   path:
@@ -37,7 +35,7 @@ outputs:
     value: ${{ steps.update.outputs.newer-available }}
   build-errors:
     description: "True if stack was not able to build"
-    value: ${{ steps.build.outputs.build-errors }}
+    value: ${{ steps.commit.outputs.build-errors }}
   commit-message:
     description: "Commit message used, including Changelog information"
     value: ${{ steps.commit.outputs.message }}
@@ -86,17 +84,7 @@ runs:
 
         sed -i 's/^resolver: .*$/resolver: '"$latest"'/' "$path"
     - if: ${{ inputs.dry-run != 'true' && steps.update.outputs.newer-available == 'true' }}
-      name: Build
-      id: build
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      run: |
-        stack_yaml=${{ inputs.stack-yaml }}
-        if ! stack build --dry-run --test --bench --stack-yaml "$stack_yaml" ; then
-          echo "::set-output name=build-errors::true"
-        fi
-    - if: ${{ steps.update.outputs.newer-available == 'true' }}
-      name: Commit
+      name: Build and commit
       id: commit
       shell: bash
       working-directory: ${{ inputs.working-directory }}
@@ -106,6 +94,9 @@ runs:
         stack_yaml=${{ inputs.stack-yaml }}
         stack_yaml_lock=${{ inputs.stack-yaml }}.lock
         path=${{ steps.setup.outputs.path }}
+        if ! stack build --dry-run --test --bench --stack-yaml "$stack_yaml" ; then
+          echo "::set-output name=build-errors::true"
+        fi
 
         commit_message() {
           cat <<EOM
