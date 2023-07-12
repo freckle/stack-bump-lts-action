@@ -91,7 +91,8 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        if ! stack build --dry-run --test --bench; then
+        stack_yaml=${{ inputs.stack-yaml }}
+        if ! stack build --dry-run --test --bench --stack-yaml "$stack_yaml" ; then
           echo "::set-output name=build-errors::true"
         fi
     - if: ${{ steps.update.outputs.newer-available == 'true' }}
