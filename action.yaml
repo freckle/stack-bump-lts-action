@@ -116,6 +116,6 @@ runs:
         git commit "$stack_yaml" "$stack_yaml_lock" "$path" --file <(commit_message)
 
         delimiter="$(openssl rand -hex 8)"
-        echo "output_message<<${delimiter}" >> $GITHUB_OUTPUT
+        echo "message<<${delimiter}" >> $GITHUB_OUTPUT
         commit_message >> $GITHUB_OUTPUT
         echo "${delimiter}" >> $GITHUB_OUTPUT
