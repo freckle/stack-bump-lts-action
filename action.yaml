@@ -53,17 +53,17 @@ runs:
         else
           path=${{ inputs.stack-yaml }}
         fi
-        echo "::set-output name=path::$path"
+        echo "path=$path" >>"$GITHUB_OUTPUT"
 
         current=$(sed '/^resolver: \(.*\)$/!d; s//\1/' "$path")
-        echo "::set-output name=current::$current"
+        echo "current=$current" >>"$GITHUB_OUTPUT"
 
         latest=$(
           curl --silent -D - https://www.stackage.org/lts |
             sed '/^location: \/\(.*\)/!d; s//\1/;' |
             tr '\r\n' '\n'
         )
-        echo "::set-output name=latest::$latest"
+        echo "latest=$latest" >>"$GITHUB_OUTPUT"
 
     - name: Update resolver
       id: update
@@ -76,11 +76,11 @@ runs:
 
         if [[ "$current" == "$latest" ]]; then
           echo "Up to date ($current)"
-          echo "::set-output name=newer-available::false"
+          echo "newer-available=false" >>"$GITHUB_OUTPUT"
           exit 0
         fi
 
-        echo "::set-output name=newer-available::true"
+        echo "newer-available=true" >>"$GITHUB_OUTPUT"
 
         sed -i 's/^resolver: .*$/resolver: '"$latest"'/' "$path"
     - if: ${{ inputs.dry-run != 'true' && steps.update.outputs.newer-available == 'true' }}
@@ -95,7 +95,7 @@ runs:
         stack_yaml_lock=${{ inputs.stack-yaml }}.lock
         path=${{ steps.setup.outputs.path }}
         if ! stack build --dry-run --test --bench --stack-yaml "$stack_yaml" ; then
-          echo "::set-output name=build-errors::true"
+          echo "build-errors=true" >>"$GITHUB_OUTPUT"
         fi
 
         commit_message() {
@@ -120,4 +120,4 @@ runs:
         output_message="${output_message//'%'/'%25'}"
         output_message="${output_message//$'\n'/'%0A'}"
         output_message="${output_message//$'\r'/'%0D'}"
-        echo "::set-output name=message::$output_message"
+        echo "message=$output_message" >>"$GITHUB_OUTPUT"
