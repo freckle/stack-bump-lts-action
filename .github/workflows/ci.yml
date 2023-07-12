@@ -19,7 +19,7 @@ jobs:
         run: |
           newer_available=${{ steps.test.outputs.newer-available }}
           build_errors=${{ steps.test.outputs.build-errors }}
-          commit_message=${{ steps.test.outputs.commit-message }}
+          commit_message="${{ steps.test.outputs.commit-message }}"
           if [[ "$newer_available" != "true" ]]; then
             echo "Failed to find newer resolver"
             exit 1
