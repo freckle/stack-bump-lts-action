@@ -15,9 +15,15 @@ jobs:
         uses: ./
         with:
           working-directory: test/lts-example
-      - run: |
+      - name: Validate action outputs
+        run: |
           newer_available=${{ steps.test.outputs.newer-available }}
+          build_errors=${{ steps.test.outputs.build-errors }}
           if [[ "$newer_available" != "true" ]]; then
             echo "Failed to find newer resolver"
+            exit 1
+          fi
+          if [[ "$build_errors" == "true" ]]; then
+            echo "Failed to build with updated resolver"
             exit 1
           fi
