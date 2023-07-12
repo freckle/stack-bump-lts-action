@@ -115,9 +115,7 @@ runs:
         git config --global user.name "$actor"
         git commit "$stack_yaml" "$stack_yaml_lock" "$path" --file <(commit_message)
 
-        # https://github.community/t/set-output-truncates-multiline-strings/16852/5
-        output_message=$(commit_message)
-        output_message="${output_message//'%'/'%25'}"
-        output_message="${output_message//$'\n'/'%0A'}"
-        output_message="${output_message//$'\r'/'%0D'}"
-        echo "message=$output_message" >>"$GITHUB_OUTPUT"
+        delimiter="$(openssl rand -hex 8)"
+        echo "output_message<<${delimiter}" >> $GITHUB_OUTPUT
+        commit_message >> $GITHUB_OUTPUT
+        echo "${delimiter}" >> $GITHUB_OUTPUT
