@@ -14,7 +14,7 @@ jobs:
         id: test
         uses: ./
         with:
-          stack-yaml: test/lts-example.yaml
+          working-directory: test/lts-example
           dry-run: true
       - run: |
           newer_available=${{ steps.test.outputs.newer-available }}
