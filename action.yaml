@@ -18,7 +18,7 @@ inputs:
   actor:
     description: "Login to use instead of github.actor"
     required: true
-    default: ''
+    default: ""
   dry-run:
     description: Set to "true" to skip building with updated stack.yaml
 
