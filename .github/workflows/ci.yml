@@ -19,11 +19,17 @@ jobs:
         run: |
           newer_available=${{ steps.test.outputs.newer-available }}
           build_errors=${{ steps.test.outputs.build-errors }}
+          commit_message=${{ steps.test.outputs.commit-message }}
           if [[ "$newer_available" != "true" ]]; then
             echo "Failed to find newer resolver"
             exit 1
           fi
           if [[ "$build_errors" == "true" ]]; then
             echo "Failed to build with updated resolver"
+            exit 1
+          fi
+          if ! echo "$commit_message" | grep -q "Bump Stackage Resolver to"  ; then
+            echo "Malformed commit message:"
+            echo "$commit_message"
             exit 1
           fi
