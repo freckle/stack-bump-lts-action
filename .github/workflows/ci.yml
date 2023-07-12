@@ -17,9 +17,20 @@ jobs:
           working-directory: test/lts-example
       - name: Validate action outputs
         run: |
+          current=${{ steps.test.outputs.current }}
+          latest=${{ steps.test.outputs.latest }}
           newer_available=${{ steps.test.outputs.newer-available }}
           build_errors=${{ steps.test.outputs.build-errors }}
           commit_message="${{ steps.test.outputs.commit-message }}"
+          if [[ "$current" != "lts-20.20" ]]; then
+            echo "Found unexpected current LTS version:"
+            echo "$current"
+            exit 1
+          fi
+          if [[ -z "$latest" ]]; then
+            echo "Action failed to find latest LTS version"
+            exit 1
+          fi
           if [[ "$newer_available" != "true" ]]; then
             echo "Failed to find newer resolver"
             exit 1
