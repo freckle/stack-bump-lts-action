@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: main
+
+jobs:
+  test-lts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run action on stack.yaml resolving to LTS Haskell snapshot
+        id: test
+        uses: ./
+        with:
+          stack-yaml: test/lts-example.yaml
+          dry-run: true
+      - run: |
+          newer_available=${{ steps.test.outputs.newer-available }}
+          if [[ "$newer_available" != "true" ]]; then
+            echo "Failed to find newer resolver"
+            exit 1
+          fi

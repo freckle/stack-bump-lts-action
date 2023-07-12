@@ -19,6 +19,8 @@ inputs:
     description: "Login to use instead of github.actor"
     required: true
     default: ''
+  dry-run:
+    description: Set to "true" to skip building with updated stack.yaml
 
 outputs:
   path:
@@ -32,10 +34,10 @@ outputs:
     value: ${{ steps.setup.outputs.latest }}
   newer-available:
     description: "True if we found a newer resolver"
-    value: ${{ steps.commit.outputs.newer-available }}
+    value: ${{ steps.update.outputs.newer-available }}
   build-errors:
     description: "True if stack was not able to build"
-    value: ${{ steps.commit.outputs.build-errors }}
+    value: ${{ steps.build.outputs.build-errors }}
   commit-message:
     description: "Commit message used, including Changelog information"
     value: ${{ steps.commit.outputs.message }}
@@ -65,15 +67,13 @@ runs:
         )
         echo "::set-output name=latest::$latest"
 
-    - name: Update resolver and commit
-      id: commit
+    - name: Update resolver
+      id: update
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
         current=${{ steps.setup.outputs.current }}
         latest=${{ steps.setup.outputs.latest }}
-        stack_yaml=${{ inputs.stack-yaml }}
-        stack_yaml_lock=${{ inputs.stack-yaml }}.lock
         path=${{ steps.setup.outputs.path }}
 
         if [[ "$current" == "$latest" ]]; then
@@ -83,6 +83,28 @@ runs:
         fi
 
         echo "::set-output name=newer-available::true"
+
+        sed -i 's/^resolver: .*$/resolver: '"$latest"'/' "$path"
+    - if: ${{ inputs.dry-run != 'true' && steps.update.outputs.newer-available == 'true' }}
+      name: Build
+      id: build
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        if ! stack build --dry-run --test --bench; then
+          echo "::set-output name=build-errors::true"
+        fi
+    - if: ${{ steps.update.outputs.newer-available == 'true' }}
+      name: Commit
+      id: commit
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        current=${{ steps.setup.outputs.current }}
+        latest=${{ steps.setup.outputs.latest }}
+        stack_yaml=${{ inputs.stack-yaml }}
+        stack_yaml_lock=${{ inputs.stack-yaml }}.lock
+        path=${{ steps.setup.outputs.path }}
 
         commit_message() {
           cat <<EOM
@@ -94,13 +116,6 @@ runs:
 
         EOM
         }
-
-        sed -i 's/^resolver: .*$/resolver: '"$latest"'/' "$path"
-        if ! stack build --dry-run --test --bench; then
-          echo "::set-output name=build-errors::true"
-        fi
-
-        echo "::set-output name=build-errors::false"
 
         actor=${{ inputs.actor }}
         actor=${actor:-${{ github.actor }}}

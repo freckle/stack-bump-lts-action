@@ -1,0 +1,2 @@
+# Resolver to an earlier LTS Haskell snapshot
+resolver: lts-20.20
