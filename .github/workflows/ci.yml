@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: main
+
+jobs:
+  test-lts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run action on stack.yaml resolving to LTS Haskell snapshot
+        id: test
+        uses: ./
+        with:
+          working-directory: test/lts-example
+      - name: Validate action outputs
+        run: |
+          current=${{ steps.test.outputs.current }}
+          latest=${{ steps.test.outputs.latest }}
+          newer_available=${{ steps.test.outputs.newer-available }}
+          build_errors=${{ steps.test.outputs.build-errors }}
+          commit_message="${{ steps.test.outputs.commit-message }}"
+          if [[ "$current" != "lts-20.20" ]]; then
+            echo "Found unexpected current LTS version:"
+            echo "$current"
+            exit 1
+          fi
+          if [[ -z "$latest" ]]; then
+            echo "Action failed to find latest LTS version"
+            exit 1
+          fi
+          if [[ "$newer_available" != "true" ]]; then
+            echo "Failed to find newer resolver"
+            exit 1
+          fi
+          if [[ "$build_errors" == "true" ]]; then
+            echo "Failed to build with updated resolver"
+            exit 1
+          fi
+          if ! echo "$commit_message" | grep -q "Bump Stackage Resolver to"  ; then
+            echo "Malformed commit message:"
+            echo "$commit_message"
+            exit 1
+          fi

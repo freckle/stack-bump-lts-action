@@ -18,7 +18,7 @@ inputs:
   actor:
     description: "Login to use instead of github.actor"
     required: true
-    default: ''
+    default: ""
 
 outputs:
   path:
@@ -32,7 +32,7 @@ outputs:
     value: ${{ steps.setup.outputs.latest }}
   newer-available:
     description: "True if we found a newer resolver"
-    value: ${{ steps.commit.outputs.newer-available }}
+    value: ${{ steps.update.outputs.newer-available }}
   build-errors:
     description: "True if stack was not able to build"
     value: ${{ steps.commit.outputs.build-errors }}
@@ -53,19 +53,38 @@ runs:
         else
           path=${{ inputs.stack-yaml }}
         fi
-        echo "::set-output name=path::$path"
+        echo "path=$path" >>"$GITHUB_OUTPUT"
 
         current=$(sed '/^resolver: \(.*\)$/!d; s//\1/' "$path")
-        echo "::set-output name=current::$current"
+        echo "current=$current" >>"$GITHUB_OUTPUT"
 
         latest=$(
           curl --silent -D - https://www.stackage.org/lts |
             sed '/^location: \/\(.*\)/!d; s//\1/;' |
             tr '\r\n' '\n'
         )
-        echo "::set-output name=latest::$latest"
+        echo "latest=$latest" >>"$GITHUB_OUTPUT"
 
-    - name: Update resolver and commit
+    - name: Update resolver
+      id: update
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        current=${{ steps.setup.outputs.current }}
+        latest=${{ steps.setup.outputs.latest }}
+        path=${{ steps.setup.outputs.path }}
+
+        if [[ "$current" == "$latest" ]]; then
+          echo "Up to date ($current)"
+          echo "newer-available=false" >>"$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        echo "newer-available=true" >>"$GITHUB_OUTPUT"
+
+        sed -i 's/^resolver: .*$/resolver: '"$latest"'/' "$path"
+    - if: ${{ inputs.dry-run != 'true' && steps.update.outputs.newer-available == 'true' }}
+      name: Build and commit
       id: commit
       shell: bash
       working-directory: ${{ inputs.working-directory }}
@@ -75,14 +94,9 @@ runs:
         stack_yaml=${{ inputs.stack-yaml }}
         stack_yaml_lock=${{ inputs.stack-yaml }}.lock
         path=${{ steps.setup.outputs.path }}
-
-        if [[ "$current" == "$latest" ]]; then
-          echo "Up to date ($current)"
-          echo "::set-output name=newer-available::false"
-          exit 0
+        if ! stack build --dry-run --test --bench --stack-yaml "$stack_yaml" ; then
+          echo "build-errors=true" >>"$GITHUB_OUTPUT"
         fi
-
-        echo "::set-output name=newer-available::true"
 
         commit_message() {
           cat <<EOM
@@ -95,22 +109,13 @@ runs:
         EOM
         }
 
-        sed -i 's/^resolver: .*$/resolver: '"$latest"'/' "$path"
-        if ! stack build --dry-run --test --bench; then
-          echo "::set-output name=build-errors::true"
-        fi
-
-        echo "::set-output name=build-errors::false"
-
         actor=${{ inputs.actor }}
         actor=${actor:-${{ github.actor }}}
         git config --global user.email "$actor@users.noreply.github.com"
         git config --global user.name "$actor"
         git commit "$stack_yaml" "$stack_yaml_lock" "$path" --file <(commit_message)
 
-        # https://github.community/t/set-output-truncates-multiline-strings/16852/5
-        output_message=$(commit_message)
-        output_message="${output_message//'%'/'%25'}"
-        output_message="${output_message//$'\n'/'%0A'}"
-        output_message="${output_message//$'\r'/'%0D'}"
-        echo "::set-output name=message::$output_message"
+        delimiter="$(openssl rand -hex 8)"
+        echo "message<<${delimiter}" >> $GITHUB_OUTPUT
+        commit_message >> $GITHUB_OUTPUT
+        echo "${delimiter}" >> $GITHUB_OUTPUT
