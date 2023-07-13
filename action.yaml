@@ -21,8 +21,8 @@ inputs:
     default: ""
   github-repo:
     description: "Repo in which snapshots are kept, e.g.: commercialhaskell/stackage-snapshots"
-  repo-branch:
-    description: "Branch of snapshot repo to use"
+  github-ref:
+    description: "Branch, commit, or tag of snapshot repo to use"
     default: main
   github-token:
     description: "Override GitHub token, if necessary"
@@ -58,7 +58,7 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       run: |
         gh_repo=${{ inputs.github-repo }}
-        branch=${{ inputs.repo-branch }}
+        gh_ref=${{ inputs.github-ref }}
         if [ -n "${{ inputs.snapshot-yaml }}" ]; then
           path=${{ inputs.snapshot-yaml }}
         else
@@ -77,11 +77,11 @@ runs:
           )
         else
           latest_version=$(
-            gh api "/repos/$gh_repo/git/trees/$branch?recursive=true" -q '.tree[]|.path' |
+            gh api "/repos/$gh_repo/git/trees/$gh_ref?recursive=true" -q '.tree[]|.path' |
               sort -rV |
               head -n 1
           )
-          latest="https://raw.githubusercontent.com/$gh_repo/$branch/$latest_version"
+          latest="https://raw.githubusercontent.com/$gh_repo/$gh_ref/$latest_version"
         fi
         echo "latest=$latest" >>"$GITHUB_OUTPUT"
       env:
