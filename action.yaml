@@ -80,6 +80,8 @@ runs:
           latest="https://raw.githubusercontent.com/$gh_repo/$branch/$latest_version"
         fi
         echo "latest=$latest" >>"$GITHUB_OUTPUT"
+      env:
+        GH_TOKEN: ${{ github.token }}
 
     - name: Update resolver
       id: update
