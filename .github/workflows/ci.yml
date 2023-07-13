@@ -15,7 +15,7 @@ jobs:
             expected-current: lts-20.20
           - working-directory: test/custom-repo-example
             expected-current: https://raw.githubusercontent.com/freckle/stackage-snapshots/main/lts/20/20.yaml
-            github-repo: freckle/freckle/stackage-snapshots
+            github-repo: freckle/stackage-snapshots
       fail-fast: false
     steps:
       - uses: actions/checkout@v3
