@@ -1,0 +1,2 @@
+# Resolver to a custom snapshot repository
+resolver: https://raw.githubusercontent.com/freckle/stackage-snapshots/main/lts/20/20.yaml
