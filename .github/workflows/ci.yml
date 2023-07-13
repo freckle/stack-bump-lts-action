@@ -10,10 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        label:
+          - lts
+          - custom
         include:
-          - working-directory: test/lts-example
+          - label: lts
+            working-directory: test/lts-example
             expected-current: lts-20.20
-          - working-directory: test/custom-repo-example
+          - label: custom
+            working-directory: test/custom-repo-example
             expected-current: https://raw.githubusercontent.com/freckle/stackage-snapshots/main/lts/20/20.yaml
             github-repo: freckle/stackage-snapshots
       fail-fast: false
