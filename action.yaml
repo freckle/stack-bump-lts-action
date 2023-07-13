@@ -24,6 +24,10 @@ inputs:
   repo-branch:
     description: "Branch of snapshot repo to use"
     default: main
+  github-token:
+    description: "Override GitHub token, if necessary"
+    required: true
+    default: "${{ github.token }}"
 
 outputs:
   path:
@@ -81,7 +85,7 @@ runs:
         fi
         echo "latest=$latest" >>"$GITHUB_OUTPUT"
       env:
-        GH_TOKEN: ${{ github.token }}
+        GH_TOKEN: ${{ inputs.github-token }}
 
     - name: Update resolver
       id: update
