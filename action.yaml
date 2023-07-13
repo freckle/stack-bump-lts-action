@@ -100,7 +100,8 @@ runs:
 
         echo "newer-available=true" >>"$GITHUB_OUTPUT"
 
-        sed -i 's/^resolver: .*$/resolver: '"$latest"'/' "$path"
+        escaped_latest=${latest//\//\\/}
+        sed -i 's/^resolver: .*$/resolver: '"$escaped_latest"'/' "$path"
     - if: ${{ inputs.dry-run != 'true' && steps.update.outputs.newer-available == 'true' }}
       name: Build and commit
       id: commit
