@@ -6,23 +6,34 @@ on:
     branches: main
 
 jobs:
-  test-lts:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - working-directory: test/lts-example
+            expected-current: lts-20.20
+          - working-directory: test/custom-repo-example
+            expected-current: https://raw.githubusercontent.com/freckle/stackage-snapshots/main/lts/20/20.yaml
+            github-repo: freckle/stackage-snapshots
+      fail-fast: false
     steps:
       - uses: actions/checkout@v3
       - name: Run action on stack.yaml resolving to LTS Haskell snapshot
         id: test
         uses: ./
         with:
-          working-directory: test/lts-example
+          working-directory: ${{ matrix.working-directory }}
+          github-repo: ${{ matrix.github-repo }}
       - name: Validate action outputs
         run: |
+          expected_current=${{ matrix.expected-current }}
           current=${{ steps.test.outputs.current }}
           latest=${{ steps.test.outputs.latest }}
           newer_available=${{ steps.test.outputs.newer-available }}
           build_errors=${{ steps.test.outputs.build-errors }}
           commit_message="${{ steps.test.outputs.commit-message }}"
-          if [[ "$current" != "lts-20.20" ]]; then
+          if [[ "$current" != "$expected_current" ]]; then
             echo "Found unexpected current LTS version:"
             echo "$current"
             exit 1

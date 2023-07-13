@@ -19,6 +19,15 @@ inputs:
     description: "Login to use instead of github.actor"
     required: true
     default: ""
+  github-repo:
+    description: "Repo in which snapshots are kept, e.g.: commercialhaskell/stackage-snapshots"
+  github-ref:
+    description: "Branch, commit, or tag of snapshot repo to use"
+    default: main
+  github-token:
+    description: "Override GitHub token, if necessary"
+    required: true
+    default: "${{ github.token }}"
 
 outputs:
   path:
@@ -48,6 +57,8 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
+        gh_repo=${{ inputs.github-repo }}
+        gh_ref=${{ inputs.github-ref }}
         if [ -n "${{ inputs.snapshot-yaml }}" ]; then
           path=${{ inputs.snapshot-yaml }}
         else
@@ -58,12 +69,23 @@ runs:
         current=$(sed '/^resolver: \(.*\)$/!d; s//\1/' "$path")
         echo "current=$current" >>"$GITHUB_OUTPUT"
 
-        latest=$(
-          curl --silent -D - https://www.stackage.org/lts |
-            sed '/^location: \/\(.*\)/!d; s//\1/;' |
-            tr '\r\n' '\n'
-        )
+        if [[ -z "$gh_repo" ]]; then
+          latest=$(
+            curl --silent -D - https://www.stackage.org/lts |
+              sed '/^location: \/\(.*\)/!d; s//\1/;' |
+              tr '\r\n' '\n'
+          )
+        else
+          latest_version=$(
+            gh api "/repos/$gh_repo/git/trees/$gh_ref?recursive=true" -q '.tree[]|.path' |
+              sort -rV |
+              head -n 1
+          )
+          latest="https://raw.githubusercontent.com/$gh_repo/$gh_ref/$latest_version"
+        fi
         echo "latest=$latest" >>"$GITHUB_OUTPUT"
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
 
     - name: Update resolver
       id: update
@@ -82,7 +104,7 @@ runs:
 
         echo "newer-available=true" >>"$GITHUB_OUTPUT"
 
-        sed -i 's/^resolver: .*$/resolver: '"$latest"'/' "$path"
+        sed -i 's|^resolver: .*$|resolver: '"$latest"'|' "$path"
     - if: ${{ inputs.dry-run != 'true' && steps.update.outputs.newer-available == 'true' }}
       name: Build and commit
       id: commit
