@@ -58,18 +58,12 @@ To operate in a sub-directory:
 
 **NOTE**: Path options are relative to this.
 
-## Resolver Changelog
+## Package Diff
 
-The commit message will link to another project of ours, [Resolver
-Changelog][rcl]. For example,
+The commit message will link to a diff of packages changes between the
+resolvers. For example,
 
-[rcl]: https://github.com/freckle/rcl
-
-https://rcl.freckle.com?from=lts-16.29&to=lts-17.1
-
-This service displays the packages added, removed, or changed between the given
-two resolvers. And, where possible, the section of each dependency's Changelog
-relevant for the update.
+https://www.stackage.org/diff/lts-16.29/lts-17.1
 
 ---
 

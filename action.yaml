@@ -126,7 +126,7 @@ runs:
 
         See here for changed packages:
 
-        https://rcl.freckle.com/?from=$current&to=$latest
+        https://www.stackage.org/diff/$current/$latest
 
         EOM
         }
