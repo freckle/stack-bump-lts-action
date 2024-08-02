@@ -24,7 +24,6 @@ jobs:
           branch: gh/bump-lts
           title: Bump Stackage LTS
           body: ${{ steps.bump.outputs.commit-message }}
-
 ```
 
 ## Options
